@@ -1,0 +1,668 @@
+openapi: 3.0.3
+info: 
+  title: Contrato API para gestión de solicitudes académicas.
+  version: 1.0.0
+  description: |
+    Contrato API para gestionar el ciclo de vida de solicitudes académicas: registro, clasificación, priorización, asignación, atención y cierre.
+servers: 
+components: 
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas: 
+    uuid:
+      type: string
+      format: uuid
+      description: identificador uuid v4
+    Prioridad: 
+      type: string
+      enum:
+        - baja
+        - media
+        - alta
+        - urgente
+    TipoSolicitud:
+      type: string
+      enum:
+        - registro_asignaturas
+        - homologacion
+        - cancelacion
+        - solicitud_cupo
+        - consulta_academica
+        - otro
+    EstadoSolicitud:
+      type: string
+      enum:
+        - registrada
+        - clasificada
+        - en_atencion
+        - atendida
+        - cerrada
+    HistorialAccion:
+      type: object
+      description:
+        Registro de las acciones para auditoría
+      properties: 
+        id: 
+          $ref: '#/components/schemas/uuid'
+        solicitudId:
+          $ref: '#/components/schemas/uuid'
+        accion:
+          type: string
+          description: Registrar, clasificar, asignar, iniciar atencion, responder, cerrar.
+        usuario: 
+          $ref: '#/components/schemas/RefUsuario'
+        timestamp:
+          type: string
+          format: date-time
+        observacion:
+          type: string
+      required: [id, solicitudId, accion, usuario, timestamp]
+    RefUsuario:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/uuid'
+        nombre: 
+          type: string
+        rol: 
+          type: string
+          enum: 
+            - 
+      required: [id, nombre]
+    SolicitudBase:
+      type: object
+      properties:
+        id: 
+          $ref: '#/components/schemas/uuid'
+        tipo:
+          $ref: '#/components/schemas/TipoSolicitud'
+        descripcion: 
+          type: string
+        canalOrigen: 
+          type: string
+          description: "CSU, correo, SAC, telefono, presencial, etc"
+        timestamp: 
+          type: string
+          format: date-time
+        solicitante: 
+          $ref: '#/components/schemas/RefUsuario'
+        estado: 
+          $ref: '#/components/schemas/EstadoSolicitud'
+        prioridad: 
+          $ref: '#/components/schemas/Prioridad'
+        justificacionPrioridad: 
+          type: string
+        responsable:
+          $ref: '#/components/schemas/RefUsuario'
+          nullable: true
+        fechaLimite: 
+          type: string
+          format: date-time
+          nullable: true
+        observacion: 
+          type: string
+        tipoSugerenciaIA:
+          $ref: '#/components/schemas/TipoSolicitud'
+          nullable: true
+        prioridadSugerenciaIA:
+          $ref: '#/components/schemas/Prioridad'
+          nullable: true
+        valorConfianzaIA:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+      required: [id, tipo, descripcion, canalOrigen, registradoEn, solicitante, estado]
+    EntradaSolicitud:
+      type: object
+      properties: 
+        tipo:
+          $ref: '#/components/schemas/TipoSolicitud'
+        descripcion:
+          type: string
+        canalOrigen:
+          type: string
+          example: "correo"
+        solicitanteId:
+          $ref: '#/components/schemas/uuid'
+        fechaLimite:
+          type: string
+          format: date-time
+      required: [tipo, descripcion, canalOrigen, solicitanteId]
+    RespuestaSolicitud:
+      allof:
+        - $ref: '#/components/schemas/SolicitudBase'
+    #Cuerpos de las peticiones de clasificacion, de priorizacion, de asignacion, y de cerrado de la solicitud.
+    ClasificationPayload:
+      type: object
+      properties:
+        tipo:
+          $ref: '#/components/schemas/TipoSolicitud'
+        observacion: 
+          type: string
+      required: [tipo]
+    PrioritizationPayload:
+      type: object
+      properties:
+        prioridad: 
+          $ref: '#/components/schemas/Prioridad'
+        justificacion:
+          type: string
+      required: [prioridad, justificacion]
+    AssignmentPayload:
+      type: object
+      properties:
+        responsableId:
+          $ref: '#/components/schemas/uuid'
+        observacion: 
+          type: string
+      required: [responsableId]
+    ClosePayload:
+      type: object
+      properties:
+        observacionCierre:
+          type: string
+      required: [observacionCierre]
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: object
+  parameters:
+    requestIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/uuid'
+      description: UUID de la solicitud
+paths: 
+  /solicitudes:
+    post:
+      summary: Registrar una nueva solicitud.
+      description:
+        Registro inicial de la solicitud. Cualquier usuario autenticado puede crear. Crea la entrada en estado 'registrada' y agrega un registro en historial.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntradaSolicitud'
+      responses:
+        '201': 
+          description: Solicitud creada.
+          headers:
+            Location:
+              description: URL del recurso creado
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: Datos invalidos.
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No autorizado.
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get: 
+      summary: Listar / filtrar solicitudes.
+      description: 
+        Listado con filtros por estado, tipo, prioridad, responsable. Unicamente  los administradores pueden ver/filtrar por  solicitantes.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: estado
+          schema:
+            $ref: '#/components/schemas/EstadoSolicitud'
+          description: Filtra por estado.
+        - in: query
+          name: tipo
+          schema:
+            $ref: '#/components/schemas/TipoSolicitud'
+          description: Filtrar por tipo.
+        - in: query
+          name: prioridad
+          schema:
+            $ref: '#/components/schemas/Prioridad'
+        - in: query
+          name: responsableId
+          schema:
+            $ref: '#/components/schemas/uuid'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Lista de solicitudes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: Parámetros inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    
+  /solicitudes/{id}:
+    get:
+      summary: Obtener una solicitud por id
+      description: Recupera la solicitud. Incluye resumen; para historial completo use /requests/{id}/history.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      responses:
+        '200':
+          description: Solicitud encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '403':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Actualizar campos editables de la solicitud
+      description: Permite actualizar campos no restringidos (ej descripción, fechaLimite). No permite modificar una solicitud cerrada. Roles... solicitante (propio) o administradores/operadores según políticas.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Campos editables
+              properties:
+                descripcion:
+                  type: string
+                fechaLimite:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Actualización correcta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: Datos inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No autorizado o estado no modificable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /solicitudes/{id}/clasificar:
+    patch:
+      summary: Clasificar una solicitud
+      description: Establece el tipo (clasificación) y registra la acción en historial.
+        Roles... operador/administrador. Si hay sugerencias IA estas pueden consultarse pero su uso es opcional.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClasificationPayload'
+      responses:
+        '200':
+          description: Clasificación aplicada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: Datos inválidos (ej. transición no permitida).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /solicitudes/{id}/priorizar:
+    patch:
+      summary: Asignar prioridad a una solicitud
+      description: Define prioridad y su justificación; registra el evento en el historial. Roles... operador/administrador.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrioritizationPayload'
+      responses:
+        '200':
+          description: Prioridad aplicada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: Datos inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /solicitudes/{id}/asignar:
+    patch:
+      summary: Asignar responsable
+      description: Asigna la solicitud a un responsable activo y agrega el registro al historial. Roles... operador/administrador. Valida que el responsable esté activo.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentPayload'
+      responses:
+        '200':
+          description: Asignación realizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: Datos inválidos o responsable inactivo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrada (solicitud o responsable).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /solicitudes/{id}/iniciar-atencion:
+    patch:
+      summary: Iniciar atención de la solicitud (marcar en_atencion)
+      description: Marca la solicitud como 'en_atencion' y registra quién la inició. Roles... responsable asignado o operador.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                observacion:
+                  type: string
+      responses:
+        '200':
+          description: Estado actualizado a 'en_atencion'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: Transición no permitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /solicitudes/{id}/resolver:
+    patch:
+      summary: Marcar como atendida (resultado parcial/respuesta)
+      description: Registra la acción de atender (puede incluir adjuntos/respuesta). No cierra por completo. Roles... responsable asignado/operador.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                respuesta:
+                  type: string
+              required: [respuesta]
+      responses:
+        '200':
+          description: Acción registrada y estado actualizado (ej. atendida si corresponde)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: Transición inválida o datos faltantes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /solicitudes/{id}/cerrar:
+    post:
+      summary: Cerrar la solicitud (solo si fue atendida)
+      description: Cierra la solicitud. Validación... solo se permite cerrar si ya está en atendida.
+        Debe registrarse una observación de cierre (RF-08). Roles... responsable / operador / administrador.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClosePayload'
+      responses:
+        '200':
+          description: Solicitud cerrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSolicitud'
+        '400':
+          description: No se puede cerrar (p.e. no está en estado atendida) o datos inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Solicitud no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /solicitudes/{id}/historial:
+    get:
+      summary: Obtener historial auditable de la solicitud
+      description: Devuelve la trazabilidad completa (quién, cuándo, qué acción, observaciones). Roles... operador, administrador, solicitante (solo su propia solicitud).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestIdParam'
+      responses:
+        '200':
+          description: Historial de la solicitud
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistorialAccion'
+        '403':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Solicitud no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /sugerencias/clasificar:
+    post:
+      summary: (Opcional) Sugerir clasificación/prioridad mediante IA
+      description: Endpoint opcional para sistemas con integración IA. Recibe texto descriptivo y devuelve sugerencias.
+        **Importante... la API base no depende de este servicio; su uso es asistido y las sugerencias deben ser confirmadas por un humano.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                descripcion:
+                  type: string
+              required: [descripcion]
+      responses:
+        '200':
+          description: Sugerencia generada (tipo, prioridad, confianza)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestedType:
+                    $ref: '#/components/schemas/TipoSolicitud'
+                  suggestedPriority:
+                    $ref: '#/components/schemas/Prioridad'
+                  confidence:
+                    type: number
+                    format: float
+                    minimum: 0
+                    maximum: 1
+        '400':
+          description: Datos inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+security: 
+  - bearerAuth: []
+x-state-transitions:
+  description: "Reglas de transición de estado permitidas"
+  transitions:
+    registrada:
+      allowed_to: [clasificada]
+    clasificada:
+      allowed_to: [en_atencion, cerrada]
+    en_atencion:
+      allowed_to: [atendida, cerrada]
+    atendida:
+      allowed_to: [cerrada]
+    cerrada:
+      allowed_to: []
