@@ -8,6 +8,14 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Documentación de la API para desarrolladores.
+ * endpoints disponibles en /swagger-ui.html
+ * @author desuu03
+ * @version 1.0
+ */
+
+
 @Configuration
 public class OpenApiConfig {
 

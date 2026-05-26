@@ -33,6 +33,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Maneja las peticiones relacionadas con las solicitudes
+ * @author desuu03
+ * @version 1.0
+ */
+
 @RestController
 @Validated
 @RequiredArgsConstructor

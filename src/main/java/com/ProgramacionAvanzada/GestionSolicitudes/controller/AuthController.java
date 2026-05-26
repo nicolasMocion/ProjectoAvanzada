@@ -18,6 +18,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Recibe peticiones HTTP de autenticación.
+ * Maneja el login de usuarios y genera JWT
+ * @author desuu03
+ * @version 1.0
+ */
+
+
 @RestController
 @Validated
 @RequiredArgsConstructor

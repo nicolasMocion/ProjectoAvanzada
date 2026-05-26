@@ -12,9 +12,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/**
+ * Inicializa datos de referencia en la base de datos cuando se levanta la aplicación.
+ * Genera 6 tipos de solicitudes académicas y un usuario por rol.
+ * @author desuu03
+ * @version 1.0
+ */
+
 @Configuration
 @RequiredArgsConstructor
 public class ReferenceDataInitializer {
+
+
 
     private final TipoSolicitudRepository tipoSolicitudRepository;
     private final UsuarioRepository usuarioRepository;

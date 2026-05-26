@@ -40,6 +40,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+/**
+ * Toda la lógica de negocio para solicitudes aquí.
+ * @author desuu03
+ * @version 1.0
+ */
+
 @Service
 @Transactional
 @RequiredArgsConstructor

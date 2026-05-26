@@ -8,6 +8,14 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
+/**
+ * Sirve para definir filtros reutilizables que ayudan a la hora de bhacer búsquedas complejas de solicitudes.
+ * Ahorra escribir SQL.
+ * @author desuu03
+ * @version 1.0
+ */
+
+
 public final class SolicitudSpecifications {
 
     private SolicitudSpecifications() {

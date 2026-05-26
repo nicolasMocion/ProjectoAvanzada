@@ -5,6 +5,12 @@ import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.Prio
 import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.TipoSolicitudCodigo;
 import java.util.UUID;
 
+/**
+ * Contiene los filtros de búsqueda. ---> SolicitudSpecifications
+ * @author desuu03
+ * @version 1.0
+ */
+
 public record SolicitudFilter(
         EstadoSolicitud estado,
         TipoSolicitudCodigo tipo,

@@ -15,6 +15,13 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 
+/**
+ * Toda la lógica en ---> impl.
+ * Define las operaciones sobre las solicitudes.
+ * @author desuu03
+ * @version 1.0
+ */
+
 public interface SolicitudService {
 
     SolicitudResponse registrar(CrearSolicitudRequest request);

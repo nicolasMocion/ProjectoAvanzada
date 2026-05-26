@@ -31,6 +31,15 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
+/**
+ * Acá se configura toda la seguridad de la aplicación usando JSON WEB TOKENS.
+ * Protege los endpoints; imposibilita vulnerabilidad CSRF; solo permite acceso sin autenticación a /auth/login y los swagger
+ * Implementa autenticación JWT. Todas menos /auth/login requieren JWT válido.
+ * Maneja excepciones de autenticación.
+ * @author desuu03
+ * @version 1.0
+ */
+
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
 @EnableMethodSecurity

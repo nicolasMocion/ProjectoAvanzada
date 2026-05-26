@@ -19,6 +19,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Tabla historial_auditoria
+ * @author desuu03
+ * @version 1.0
+ */
+
+
 @Getter
 @Setter
 @NoArgsConstructor

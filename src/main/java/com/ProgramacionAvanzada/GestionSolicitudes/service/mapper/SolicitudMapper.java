@@ -9,6 +9,13 @@ import com.ProgramacionAvanzada.GestionSolicitudes.dto.response.SolicitudRespons
 import com.ProgramacionAvanzada.GestionSolicitudes.dto.response.UsuarioResumenResponse;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapea las entidades en DTOs (responses).
+ * El nombre no tiene nada que ver con la entidad solicitud XD
+ * @author desuu03
+ * @version 1.0
+ */
+
 @Component
 public class SolicitudMapper {
 

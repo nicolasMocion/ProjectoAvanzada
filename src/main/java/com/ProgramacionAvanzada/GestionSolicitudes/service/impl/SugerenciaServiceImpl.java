@@ -9,6 +9,13 @@ import java.math.BigDecimal;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
 
+/**
+ * Toda la lógica de negocio para IA de sugerencias aquí.
+ * Aún en construcción.
+ * @author desuu03
+ * @version 1.0
+ */
+
 @Service
 public class SugerenciaServiceImpl implements SugerenciaService {
 

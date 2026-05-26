@@ -4,6 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Mapeo de objetos java a JSON según configuración Jackson
+
+ * @author desuu03
+ * @version 1.0
+ */
+
 @Configuration
 public class JacksonConfig {
 
