@@ -1,3 +1,3 @@
 # ProjectoAvanzada
 
-Integrantes Nicolas Osorio y Santiago Navaroo
+Integrantes Nicolas Osorio y Santiago Navarro
