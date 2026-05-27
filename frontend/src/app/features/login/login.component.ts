@@ -27,7 +27,7 @@ import { AuthService } from '../../services/auth.service';
 
         <div *ngIf="error" class="login-error">{{ error }}</div>
 
-        <form (ngSubmit)="onSubmit()" class="login-form">
+        <form (ngSubmit)="onLogin()" class="login-form">
           <div class="form-group">
             <label for="email">Correo electrónico</label>
             <input
@@ -59,6 +59,45 @@ import { AuthService } from '../../services/auth.service';
             {{ loading ? 'Ingresando...' : 'Iniciar Sesión' }}
           </button>
         </form>
+
+        <div class="login-divider">
+          <span>¿No tienes cuenta?</span>
+        </div>
+
+        <button class="btn btn-outline register-toggle-btn" (click)="mostrarRegistro = !mostrarRegistro">
+          {{ mostrarRegistro ? 'Volver al inicio de sesión' : 'Crear cuenta de estudiante' }}
+        </button>
+
+        <div *ngIf="mostrarRegistro" class="register-form">
+          <h3>Registro de Estudiante</h3>
+          <div *ngIf="regError" class="alert alert-error">{{ regError }}</div>
+          <form (ngSubmit)="onRegister()">
+            <div class="form-group">
+              <label for="regIdentificacion">Identificación</label>
+              <input id="regIdentificacion" type="text" class="form-control" [(ngModel)]="regIdentificacion" name="regIdentificacion" required placeholder="Cédula o carné" />
+            </div>
+            <div class="form-group">
+              <label for="regNombre">Nombre completo</label>
+              <input id="regNombre" type="text" class="form-control" [(ngModel)]="regNombre" name="regNombre" required placeholder="Nombre y apellidos" />
+            </div>
+            <div class="form-group">
+              <label for="regEmail">Correo electrónico</label>
+              <input id="regEmail" type="email" class="form-control" [(ngModel)]="regEmail" name="regEmail" required placeholder="ejemplo@correo.com" />
+            </div>
+            <div class="form-group">
+              <label for="regPassword">Contraseña</label>
+              <input id="regPassword" type="password" class="form-control" [(ngModel)]="regPassword" name="regPassword" required placeholder="Mínimo 8 caracteres" minlength="8" />
+            </div>
+            <div class="form-group">
+              <label for="regConfirm">Confirmar contraseña</label>
+              <input id="regConfirm" type="password" class="form-control" [(ngModel)]="regConfirm" name="regConfirm" required placeholder="Repita la contraseña" />
+            </div>
+            <button type="submit" class="btn btn-primary login-btn" [disabled]="regLoading">
+              <span *ngIf="regLoading" class="spinner-sm"></span>
+              {{ regLoading ? 'Registrando...' : 'Crear cuenta' }}
+            </button>
+          </form>
+        </div>
 
         <div class="login-footer">
           <p class="text-sm text-muted">Usuarios de prueba:</p>
@@ -149,6 +188,38 @@ import { AuthService } from '../../services/auth.service';
       margin-right: 8px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .login-divider {
+      margin: 16px 0 12px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    .register-toggle-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid var(--color-primary);
+      color: var(--color-primary);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 0.875rem;
+      margin-bottom: 8px;
+    }
+    .register-toggle-btn:hover {
+      background: rgba(102,126,234,0.08);
+    }
+    .register-form {
+      margin-top: 16px;
+      padding: 16px;
+      background: #f8f9fe;
+      border-radius: var(--radius-md);
+    }
+    .register-form h3 {
+      font-size: 1rem;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
   `]
 })
 export class LoginComponent {
@@ -157,9 +228,18 @@ export class LoginComponent {
   loading = false;
   error = '';
 
+  mostrarRegistro = false;
+  regIdentificacion = '';
+  regNombre = '';
+  regEmail = '';
+  regPassword = '';
+  regConfirm = '';
+  regLoading = false;
+  regError = '';
+
   constructor(private auth: AuthService, private router: Router) {}
 
-  onSubmit(): void {
+  onLogin(): void {
     if (!this.email || !this.password) {
       this.error = 'Por favor ingrese correo y contraseña';
       return;
@@ -176,6 +256,38 @@ export class LoginComponent {
           ? 'Credenciales inválidas. Intente de nuevo.'
           : 'Error al conectar con el servidor. Verifique que el backend esté activo.';
         this.loading = false;
+      }
+    });
+  }
+
+  onRegister(): void {
+    this.regError = '';
+    if (!this.regIdentificacion || !this.regNombre || !this.regEmail || !this.regPassword) {
+      this.regError = 'Complete todos los campos';
+      return;
+    }
+    if (this.regPassword.length < 8) {
+      this.regError = 'La contraseña debe tener al menos 8 caracteres';
+      return;
+    }
+    if (this.regPassword !== this.regConfirm) {
+      this.regError = 'Las contraseñas no coinciden';
+      return;
+    }
+    this.regLoading = true;
+    this.auth.register({
+      identificacion: this.regIdentificacion,
+      nombre: this.regNombre,
+      email: this.regEmail,
+      password: this.regPassword
+    }).subscribe({
+      next: () => {
+        this.regLoading = false;
+        this.router.navigateByUrl(this.auth.getRoleRoute());
+      },
+      error: (err: any) => {
+        this.regError = err.error?.message || 'Error al registrar. Intente de nuevo.';
+        this.regLoading = false;
       }
     });
   }

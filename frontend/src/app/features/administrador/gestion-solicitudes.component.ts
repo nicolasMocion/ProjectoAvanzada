@@ -54,7 +54,7 @@ import { SolicitudDetalleComponent } from '../solicitud-detalle/solicitud-detall
             <tbody>
               <tr *ngFor="let s of filtered">
                 <td><code>{{ s.id | slice:0:8 }}...</code></td>
-                <td>{{ s.solicitante.nombre }}</td>
+                <td>{{ s.solicitante?.nombre || s.solicitanteNombre || '—' }}</td>
                 <td class="text-sm">{{ formatTipo(s.tipo) }}</td>
                 <td><span class="badge badge-{{ s.estado | lowercase }}">{{ formatEstado(s.estado) }}</span></td>
                 <td>

@@ -1,7 +1,7 @@
 export type TipoSolicitudCodigo = 'REGISTRO_ASIGNATURAS' | 'HOMOLOGACION' | 'CANCELACION' | 'SOLICITUD_CUPO' | 'CONSULTA_ACADEMICA' | 'OTRO';
 export type EstadoSolicitud = 'REGISTRADA' | 'CLASIFICADA' | 'EN_ATENCION' | 'ATENDIDA' | 'CERRADA';
 export type PrioridadNivel = 'BAJA' | 'MEDIA' | 'ALTA' | 'URGENTE';
-export type CanalOrigen = 'CSU' | 'CORREO' | 'SAC' | 'TELEFONICO' | 'PRESENCIAL' | 'OTRO';
+export type CanalOrigen = 'CSU' | 'CORREO' | 'SAC' | 'TELEFONICO' | 'PRESENCIAL' | 'PLATAFORMA' | 'OTRO';
 
 export interface Prioridad {
   nivel?: PrioridadNivel;
@@ -21,7 +21,10 @@ export interface Solicitud {
   descripcion: string;
   canalOrigen: CanalOrigen;
   fechaCreacion: string;
-  solicitante: RefUsuario;
+  solicitante: RefUsuario | null;
+  solicitanteNombre?: string;
+  solicitanteIdentificacion?: string;
+  solicitanteEmail?: string;
   responsable?: RefUsuario | null;
   estado: EstadoSolicitud;
   prioridad?: Prioridad | null;
@@ -37,9 +40,11 @@ export interface Solicitud {
 export interface CrearSolicitudRequest {
   tipo: TipoSolicitudCodigo;
   descripcion: string;
-  canalOrigen: CanalOrigen;
+  canalOrigen?: CanalOrigen;
   solicitanteId?: string;
-  fechaLimite?: string;
+  solicitanteIdentificacion?: string;
+  solicitanteNombre?: string;
+  solicitanteEmail?: string;
 }
 
 export interface ClasificarSolicitudRequest {
@@ -96,7 +101,10 @@ export interface SolicitudApiResponse {
   descripcion: string;
   canalOrigen: CanalOrigen;
   timestamp: string;
-  solicitante: RefUsuario;
+  solicitante: RefUsuario | null;
+  solicitanteNombre?: string | null;
+  solicitanteIdentificacion?: string | null;
+  solicitanteEmail?: string | null;
   estado: EstadoSolicitud;
   prioridad?: PrioridadNivel | null;
   justificacionPrioridad?: string | null;

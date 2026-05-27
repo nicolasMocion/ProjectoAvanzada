@@ -11,7 +11,9 @@ import java.util.UUID;
 public record CrearSolicitudRequest(
         @NotNull TipoSolicitudCodigo tipo,
         @NotBlank @Size(max = 2000) String descripcion,
-        @NotNull CanalOrigen canalOrigen,
+        CanalOrigen canalOrigen,
         UUID solicitanteId,
-        LocalDateTime fechaLimite) {
+        String solicitanteIdentificacion,
+        String solicitanteNombre,
+        String solicitanteEmail) {
 }

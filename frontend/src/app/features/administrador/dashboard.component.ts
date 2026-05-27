@@ -83,7 +83,7 @@ import { Usuario } from '../../models/usuario.model';
               <thead><tr><th>Solicitante</th><th>Estado</th><th>Prioridad</th></tr></thead>
               <tbody>
                 <tr *ngFor="let s of solicitudes.slice(0, 5)">
-                  <td class="text-sm">{{ s.solicitante.nombre }}</td>
+                  <td class="text-sm">{{ s.solicitante?.nombre || s.solicitanteNombre || '—' }}</td>
                   <td><span class="badge badge-{{ s.estado | lowercase }}">{{ formatEstado(s.estado) }}</span></td>
                   <td>
                     <span *ngIf="s.prioridad?.nivel" class="badge badge-{{ s.prioridad!.nivel | lowercase }}">{{ s.prioridad!.nivel }}</span>

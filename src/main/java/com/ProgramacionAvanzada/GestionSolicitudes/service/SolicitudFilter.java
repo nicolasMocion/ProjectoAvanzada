@@ -15,5 +15,6 @@ public record SolicitudFilter(
         EstadoSolicitud estado,
         TipoSolicitudCodigo tipo,
         PrioridadNivel prioridad,
-        UUID responsableId) {
+        UUID responsableId,
+        UUID solicitanteId) {
 }

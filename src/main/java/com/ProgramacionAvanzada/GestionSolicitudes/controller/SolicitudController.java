@@ -62,9 +62,10 @@ public class SolicitudController {
             @RequestParam(required = false) TipoSolicitudCodigo tipo,
             @RequestParam(required = false) PrioridadNivel prioridad,
             @RequestParam(required = false) UUID responsableId,
+            @RequestParam(required = false) UUID solicitanteId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        SolicitudFilter filter = new SolicitudFilter(estado, tipo, prioridad, responsableId);
+        SolicitudFilter filter = new SolicitudFilter(estado, tipo, prioridad, responsableId, solicitanteId);
         return solicitudService.listar(filter, PageRequest.of(page, size));
     }
 

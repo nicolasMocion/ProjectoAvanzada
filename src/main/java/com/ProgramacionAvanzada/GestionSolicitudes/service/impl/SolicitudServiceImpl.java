@@ -5,6 +5,7 @@ import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.entity.Solicitud
 import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.entity.TipoSolicitud;
 import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.entity.Usuario;
 import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.AccionHistorial;
+import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.CanalOrigen;
 import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.EstadoSolicitud;
 import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.RolUsuario;
 import com.ProgramacionAvanzada.GestionSolicitudes.dto.request.ActualizarSolicitudRequest;
@@ -61,22 +62,42 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     public SolicitudResponse registrar(CrearSolicitudRequest request) {
         Usuario actor = authenticatedUserProvider.getCurrentUser();
-        Usuario solicitante = request.solicitanteId() == null
-                ? actor
-                : findUsuario(request.solicitanteId(), "No existe el solicitante indicado.");
-        ensureCanRegisterFor(actor, solicitante);
-        TipoSolicitud tipoSolicitud = findTipoSolicitud(request.tipo());
+        boolean isStudent = RolUsuario.ESTUDIANTE.equals(actor.getRol());
 
+        TipoSolicitud tipoSolicitud = findTipoSolicitud(request.tipo());
         Solicitud solicitud = new Solicitud();
         solicitud.setDescripcion(request.descripcion().trim());
-        solicitud.setCanalOrigen(request.canalOrigen());
-        solicitud.setSolicitante(solicitante);
+
+        if (isStudent) {
+            solicitud.setCanalOrigen(CanalOrigen.PLATAFORMA);
+            solicitud.setSolicitante(actor);
+            registrarEvento(solicitud, AccionHistorial.REGISTRAR, actor,
+                    "Solicitud registrada desde la plataforma.");
+        } else {
+            CanalOrigen canal = request.canalOrigen();
+            if (canal == null) {
+                throw new BusinessRuleException("El operador debe indicar el canal de origen.");
+            }
+            solicitud.setCanalOrigen(canal);
+
+            if (request.solicitanteId() != null) {
+                Usuario solicitante = findUsuario(request.solicitanteId(), "No existe el solicitante indicado.");
+                solicitud.setSolicitante(solicitante);
+            } else if (request.solicitanteIdentificacion() != null && !request.solicitanteIdentificacion().isBlank()) {
+                Usuario solicitante = usuarioRepository.findByIdentificacion(request.solicitanteIdentificacion().trim())
+                        .orElseThrow(() -> new BusinessRuleException(
+                                "No existe un estudiante registrado con esa identificacion."));
+                solicitud.setSolicitante(solicitante);
+            } else {
+                throw new BusinessRuleException("Debe indicar la identificacion del estudiante solicitante.");
+            }
+
+            registrarEvento(solicitud, AccionHistorial.REGISTRAR, actor,
+                    "Solicitud registrada desde el canal " + canal.name() + ".");
+        }
+
         solicitud.setTipoSolicitud(tipoSolicitud);
         solicitud.registrar();
-        solicitud.getPrioridad().setFechaLimite(request.fechaLimite());
-
-        registrarEvento(solicitud, AccionHistorial.REGISTRAR, actor,
-                "Solicitud registrada desde el canal " + request.canalOrigen().name() + ".");
 
         return solicitudMapper.toResponse(solicitudRepository.save(solicitud));
     }
@@ -252,9 +273,10 @@ public class SolicitudServiceImpl implements SolicitudService {
     public void eliminar(UUID solicitudId) {
         Solicitud solicitud = findSolicitud(solicitudId);
         Usuario actor = authenticatedUserProvider.getCurrentUser();
-
-        boolean isOwner = actor.getPublicId().equals(solicitud.getSolicitante().getPublicId());
         boolean isPrivileged = isPrivileged(actor);
+
+        boolean isOwner = solicitud.getSolicitante() != null
+                && actor.getPublicId().equals(solicitud.getSolicitante().getPublicId());
 
         if (!isOwner && !isPrivileged) {
             throw new AccessDeniedException("No tiene permisos para eliminar esta solicitud.");
@@ -327,26 +349,19 @@ public class SolicitudServiceImpl implements SolicitudService {
         }
     }
 
-    private void ensureCanRegisterFor(Usuario actor, Usuario solicitante) {
-        if (!isPrivileged(actor) && !actor.getPublicId().equals(solicitante.getPublicId())) {
-            throw new AccessDeniedException("Solo operadores o administradores pueden registrar solicitudes para terceros.");
-        }
-    }
-
     private void ensureCanView(Solicitud solicitud, Usuario actor) {
-        if (isPrivileged(actor)
-                || actor.getPublicId().equals(solicitud.getSolicitante().getPublicId())
-                || (solicitud.getResponsable() != null
-                && actor.getPublicId().equals(solicitud.getResponsable().getPublicId()))) {
-            return;
-        }
+        if (isPrivileged(actor)) return;
+        if (solicitud.getSolicitante() != null
+                && actor.getPublicId().equals(solicitud.getSolicitante().getPublicId())) return;
+        if (solicitud.getResponsable() != null
+                && actor.getPublicId().equals(solicitud.getResponsable().getPublicId())) return;
         throw new AccessDeniedException("No tiene permisos para consultar esta solicitud.");
     }
 
     private void ensureCanUpdate(Solicitud solicitud, Usuario actor) {
-        if (isPrivileged(actor) || actor.getPublicId().equals(solicitud.getSolicitante().getPublicId())) {
-            return;
-        }
+        if (isPrivileged(actor)) return;
+        if (solicitud.getSolicitante() != null
+                && actor.getPublicId().equals(solicitud.getSolicitante().getPublicId())) return;
         throw new AccessDeniedException("Solo el solicitante o un usuario operativo puede actualizar la solicitud.");
     }
 
@@ -371,4 +386,5 @@ public class SolicitudServiceImpl implements SolicitudService {
     private boolean isPrivileged(Usuario actor) {
         return RolUsuario.OPERADOR.equals(actor.getRol()) || RolUsuario.ADMINISTRADOR.equals(actor.getRol());
     }
+
 }

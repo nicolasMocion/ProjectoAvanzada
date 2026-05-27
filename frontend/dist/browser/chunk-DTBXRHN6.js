@@ -1,0 +1,1 @@
+import{L as r,Nb as e,Q as c}from"./chunk-DZIRMF3R.js";var n=(()=>{class t{constructor(i){this.http=i}clasificar(i){return this.http.post("/sugerencias/clasificar",{descripcion:i})}static{this.\u0275fac=function(o){return new(o||t)(c(e))}}static{this.\u0275prov=r({token:t,factory:t.\u0275fac,providedIn:"root"})}}return t})();export{n as a};

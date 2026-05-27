@@ -19,6 +19,10 @@ export class UsuarioService {
     return this.http.get<Usuario>(`/usuarios/${id}`);
   }
 
+  buscarPorIdentificacion(identificacion: string): Observable<{ id: string; nombre: string; identificacion: string; email: string } | null> {
+    return this.http.get<{ id: string; nombre: string; identificacion: string; email: string }>(`/usuarios/buscar-por-identificacion/${encodeURIComponent(identificacion)}`);
+  }
+
   crear(req: CrearUsuarioRequest): Observable<Usuario> {
     return this.http.post<Usuario>('/usuarios', req);
   }
@@ -29,5 +33,9 @@ export class UsuarioService {
 
   toggleActivo(id: string): Observable<Usuario> {
     return this.http.patch<Usuario>(`/usuarios/${id}/toggle-activo`, {});
+  }
+
+  eliminar(id: string): Observable<void> {
+    return this.http.delete<void>(`/usuarios/${id}`);
   }
 }

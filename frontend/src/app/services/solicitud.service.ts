@@ -22,7 +22,7 @@ export class SolicitudService {
 
   listar(params?: {
     estado?: string; tipo?: string; prioridad?: string;
-    responsableId?: string; page?: number; size?: number
+    responsableId?: string; solicitanteId?: string; page?: number; size?: number
   }): Observable<PagedResponse<Solicitud>> {
     let httpParams = new HttpParams();
     if (params) {
@@ -133,6 +133,9 @@ export class SolicitudService {
       canalOrigen: api.canalOrigen,
       fechaCreacion: api.timestamp,
       solicitante: api.solicitante,
+      solicitanteNombre: api.solicitanteNombre ?? undefined,
+      solicitanteIdentificacion: api.solicitanteIdentificacion ?? undefined,
+      solicitanteEmail: api.solicitanteEmail ?? undefined,
       responsable: api.responsable ?? null,
       estado: api.estado,
       prioridad: hasPrioridad ? {

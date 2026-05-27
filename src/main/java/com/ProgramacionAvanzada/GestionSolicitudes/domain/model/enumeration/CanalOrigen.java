@@ -8,6 +8,7 @@ public enum CanalOrigen {
     SAC,
     TELEFONICO,
     PRESENCIAL,
+    PLATAFORMA,
     OTRO;
 
     @JsonCreator

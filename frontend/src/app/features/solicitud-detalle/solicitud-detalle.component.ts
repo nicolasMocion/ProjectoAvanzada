@@ -43,7 +43,10 @@ import { RolUsuario } from '../../models/auth.model';
             </div>
             <div class="detalle-field">
               <label>Solicitante</label>
-              <span>{{ solicitud.solicitante.nombre }}</span>
+              <span *ngIf="solicitud.solicitante">{{ solicitud.solicitante.nombre }}</span>
+              <span *ngIf="!solicitud.solicitante">{{ solicitud.solicitanteNombre || '—' }}</span>
+              <span *ngIf="!solicitud.solicitante && solicitud.solicitanteIdentificacion" class="text-xs text-muted"> ({{ solicitud.solicitanteIdentificacion }})</span>
+              <span *ngIf="!solicitud.solicitante && solicitud.solicitanteEmail" class="text-xs text-muted" style="display:block;">{{ solicitud.solicitanteEmail }}</span>
             </div>
             <div class="detalle-field">
               <label>Responsable</label>

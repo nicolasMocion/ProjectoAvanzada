@@ -31,3 +31,10 @@ export interface JwtPayload {
   exp: number;
   iss: string;
 }
+
+export interface RegisterRequest {
+  identificacion: string;
+  nombre: string;
+  email: string;
+  password: string;
+}

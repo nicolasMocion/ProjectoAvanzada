@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { LoginRequest, AuthResponse, RolUsuario, JwtPayload } from '../models/auth.model';
+import { LoginRequest, RegisterRequest, AuthResponse, RolUsuario, JwtPayload } from '../models/auth.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -12,6 +12,15 @@ export class AuthService {
 
   login(req: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>('/auth/login', req).pipe(
+      tap((res: AuthResponse) => {
+        localStorage.setItem(this.TOKEN_KEY, res.accessToken);
+        localStorage.setItem(this.USER_KEY, JSON.stringify(res.usuario));
+      })
+    );
+  }
+
+  register(req: RegisterRequest): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>('/auth/register', req).pipe(
       tap((res: AuthResponse) => {
         localStorage.setItem(this.TOKEN_KEY, res.accessToken);
         localStorage.setItem(this.USER_KEY, JSON.stringify(res.usuario));

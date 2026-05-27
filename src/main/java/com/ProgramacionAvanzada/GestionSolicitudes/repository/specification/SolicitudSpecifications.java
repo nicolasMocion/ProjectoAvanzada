@@ -44,6 +44,9 @@ public final class SolicitudSpecifications {
             if (filter.responsableId() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("responsable").get("publicId"), filter.responsableId()));
             }
+            if (filter.solicitanteId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("solicitante").get("publicId"), filter.solicitanteId()));
+            }
 
             return criteriaBuilder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
         };

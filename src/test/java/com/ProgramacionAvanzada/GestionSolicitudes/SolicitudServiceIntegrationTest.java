@@ -70,7 +70,9 @@ class SolicitudServiceIntegrationTest {
                 "Necesito registrar una asignatura antes del cierre del proceso.",
                 CanalOrigen.CORREO,
                 solicitante.getPublicId(),
-                LocalDateTime.now().plusDays(2)));
+                null,
+                null,
+                null));
 
         authenticateAs(administrador);
         SolicitudResponse clasificada = solicitudService.clasificar(
@@ -126,23 +128,27 @@ class SolicitudServiceIntegrationTest {
                 "Consulta general sobre homologacion.",
                 CanalOrigen.SAC,
                 solicitante.getPublicId(),
+                null,
+                null,
                 null));
         SolicitudResponse segunda = solicitudService.registrar(new CrearSolicitudRequest(
                 TipoSolicitudCodigo.SOLICITUD_CUPO,
                 "Necesito cupo en una asignatura obligatoria.",
                 CanalOrigen.CSU,
                 solicitante.getPublicId(),
-                LocalDateTime.now().plusDays(5)));
+                null,
+                null,
+                null));
 
         authenticateAs(administrador);
         solicitudService.asignar(segunda.id(), new AsignarSolicitudRequest(operador.getPublicId(), "Asignada."));
         authenticateAs(solicitante);
 
         PagedResponse<SolicitudResponse> registradas = solicitudService.listar(
-                new SolicitudFilter(EstadoSolicitud.REGISTRADA, null, null, null),
+                new SolicitudFilter(EstadoSolicitud.REGISTRADA, null, null, null, null),
                 PageRequest.of(0, 10));
         PagedResponse<SolicitudResponse> asignadasAResponsable = solicitudService.listar(
-                new SolicitudFilter(null, null, null, operador.getPublicId()),
+                new SolicitudFilter(null, null, null, operador.getPublicId(), null),
                 PageRequest.of(0, 10));
 
         assertThat(registradas.total()).isEqualTo(2);

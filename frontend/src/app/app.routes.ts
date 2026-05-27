@@ -25,7 +25,9 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/app-layout.component').then(m => m.AppLayoutComponent),
     children: [
       { path: '', loadComponent: () => import('./features/operador/dashboard.component').then(m => m.OperadorDashboardComponent) },
+      { path: 'crear', loadComponent: () => import('./features/operador/crear-solicitud.component').then(m => m.OperadorCrearSolicitudComponent) },
       { path: 'solicitudes', loadComponent: () => import('./features/operador/gestion-solicitudes.component').then(m => m.OperadorGestionComponent) },
+      { path: 'solicitudes-por-estudiante', loadComponent: () => import('./features/solicitudes-por-estudiante/solicitudes-por-estudiante.component').then(m => m.SolicitudesPorEstudianteComponent) },
     ]
   },
   {
@@ -37,6 +39,7 @@ export const routes: Routes = [
       { path: '', loadComponent: () => import('./features/administrador/dashboard.component').then(m => m.AdminDashboardComponent) },
       { path: 'usuarios', loadComponent: () => import('./features/administrador/gestion-usuarios.component').then(m => m.AdminUsuariosComponent) },
       { path: 'solicitudes', loadComponent: () => import('./features/administrador/gestion-solicitudes.component').then(m => m.AdminSolicitudesComponent) },
+      { path: 'solicitudes-por-estudiante', loadComponent: () => import('./features/solicitudes-por-estudiante/solicitudes-por-estudiante.component').then(m => m.SolicitudesPorEstudianteComponent) },
     ]
   },
   { path: '**', redirectTo: '/login' }

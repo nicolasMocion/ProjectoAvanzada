@@ -47,7 +47,7 @@ public class Solicitud {
     private String descripcion;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "canal_origen", nullable = false, length = 30)
+    @Column(name = "canal_origen", nullable = false, columnDefinition = "varchar(30)")
     private CanalOrigen canalOrigen;
 
     @Column(name = "fecha_creacion", nullable = false)
@@ -69,9 +69,18 @@ public class Solicitud {
     @Embedded
     private Prioridad prioridad = new Prioridad();
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "solicitante_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "solicitante_id")
     private Usuario solicitante;
+
+    @Column(name = "solicitante_nombre", length = 120)
+    private String solicitanteNombre;
+
+    @Column(name = "solicitante_identificacion", length = 30)
+    private String solicitanteIdentificacion;
+
+    @Column(name = "solicitante_email", length = 120)
+    private String solicitanteEmail;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsable_id")

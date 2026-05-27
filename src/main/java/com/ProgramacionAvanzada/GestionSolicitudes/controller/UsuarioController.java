@@ -1,6 +1,9 @@
 package com.ProgramacionAvanzada.GestionSolicitudes.controller;
 
+import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.entity.HistorialAuditoria;
+import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.entity.Solicitud;
 import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.entity.Usuario;
+import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.AccionHistorial;
 import com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.RolUsuario;
 import com.ProgramacionAvanzada.GestionSolicitudes.dto.request.ActualizarUsuarioRequest;
 import com.ProgramacionAvanzada.GestionSolicitudes.dto.request.CrearUsuarioRequest;
@@ -8,17 +11,24 @@ import com.ProgramacionAvanzada.GestionSolicitudes.dto.response.UsuarioResumenRe
 import com.ProgramacionAvanzada.GestionSolicitudes.dto.response.UsuarioResponse;
 import com.ProgramacionAvanzada.GestionSolicitudes.exception.BusinessRuleException;
 import com.ProgramacionAvanzada.GestionSolicitudes.exception.ResourceNotFoundException;
+import com.ProgramacionAvanzada.GestionSolicitudes.repository.HistorialAuditoriaRepository;
+import com.ProgramacionAvanzada.GestionSolicitudes.repository.SolicitudRepository;
 import com.ProgramacionAvanzada.GestionSolicitudes.repository.UsuarioRepository;
+import com.ProgramacionAvanzada.GestionSolicitudes.security.AuthenticatedUserProvider;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +46,18 @@ public class UsuarioController {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SolicitudRepository solicitudRepository;
+    private final HistorialAuditoriaRepository historialAuditoriaRepository;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
+
+    @GetMapping("/estudiantes")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
+    public List<UsuarioResumenResponse> listarEstudiantes() {
+        return usuarioRepository.findByRolAndActivoTrue(RolUsuario.ESTUDIANTE)
+                .stream()
+                .map(u -> new UsuarioResumenResponse(u.getPublicId(), u.getNombre(), u.getRol()))
+                .toList();
+    }
 
     @GetMapping("/operadores-activos")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
@@ -44,6 +66,19 @@ public class UsuarioController {
                 .stream()
                 .map(u -> new UsuarioResumenResponse(u.getPublicId(), u.getNombre(), u.getRol()))
                 .toList();
+    }
+
+    @GetMapping("/buscar-por-identificacion/{identificacion}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
+    public ResponseEntity<?> buscarPorIdentificacion(@PathVariable String identificacion) {
+        return usuarioRepository.findByIdentificacion(identificacion.trim())
+                .filter(Usuario::getActivo)
+                .map(u -> ResponseEntity.ok(Map.of(
+                        "id", u.getPublicId(),
+                        "nombre", u.getNombre(),
+                        "identificacion", u.getIdentificacion(),
+                        "email", u.getEmail())))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
@@ -118,6 +153,36 @@ public class UsuarioController {
         Usuario usuario = findUsuario(id);
         usuario.setActivo(!Boolean.TRUE.equals(usuario.getActivo()));
         return toResponse(usuarioRepository.save(usuario));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @Transactional
+    public ResponseEntity<Void> eliminar(@PathVariable UUID id) {
+        Usuario usuario = findUsuario(id);
+
+        if (RolUsuario.ADMINISTRADOR.equals(usuario.getRol())) {
+            throw new BusinessRuleException("No se puede eliminar un administrador.");
+        }
+
+        Usuario actor = authenticatedUserProvider.getCurrentUser();
+
+        List<Solicitud> solicitudesAsignadas = solicitudRepository.findByResponsablePublicId(id);
+        for (Solicitud solicitud : solicitudesAsignadas) {
+            solicitud.setObservacion("Responsable eliminado del sistema. Solicitud desasignada.");
+            solicitud.setResponsable(null);
+
+            HistorialAuditoria evento = new HistorialAuditoria();
+            evento.setAccion(AccionHistorial.ACTUALIZAR);
+            evento.setRealizadoPor(actor);
+            evento.setObservaciones("Desasignacion automatica por eliminacion del responsable.");
+            evento.setFechaHora(LocalDateTime.now());
+            solicitud.agregarEvento(evento);
+        }
+        solicitudRepository.saveAll(solicitudesAsignadas);
+
+        usuarioRepository.delete(usuario);
+        return ResponseEntity.noContent().build();
     }
 
     private Usuario findUsuario(UUID id) {
