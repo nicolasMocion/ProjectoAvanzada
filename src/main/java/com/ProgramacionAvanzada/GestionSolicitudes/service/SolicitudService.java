@@ -45,4 +45,6 @@ public interface SolicitudService {
     SolicitudResponse cerrar(UUID solicitudId, CerrarSolicitudRequest request);
 
     List<HistorialAccionResponse> obtenerHistorial(UUID solicitudId);
+
+    void eliminar(UUID solicitudId);
 }

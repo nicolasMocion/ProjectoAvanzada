@@ -1,21 +1,22 @@
 package com.ProgramacionAvanzada.GestionSolicitudes.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-/**
- * Mapeo de objetos java a JSON según configuración Jackson
-
- * @author desuu03
- * @version 1.0
- */
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Configuration
 public class JacksonConfig {
 
     @Bean
     ObjectMapper objectMapper() {
-        return new ObjectMapper().findAndRegisterModules();
+        return Jackson2ObjectMapperBuilder.json()
+                .modules(new JavaTimeModule())
+                .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .featuresToDisable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .build();
     }
 }

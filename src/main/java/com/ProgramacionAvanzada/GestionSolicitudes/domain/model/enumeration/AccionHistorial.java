@@ -1,33 +1,22 @@
 package com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum AccionHistorial {
-    REGISTRAR("registrar"),
-    CLASIFICAR("clasificar"),
-    PRIORIZAR("priorizar"),
-    ASIGNAR("asignar"),
-    INICIAR_ATENCION("iniciar_atencion"),
-    RESOLVER("resolver"),
-    CERRAR("cerrar"),
-    ACTUALIZAR("actualizar");
-
-    private final String value;
-
-    AccionHistorial(String value) {
-        this.value = value;
-    }
-
-    @JsonValue
-    public String value() {
-        return value;
-    }
+    REGISTRAR,
+    CLASIFICAR,
+    PRIORIZAR,
+    ASIGNAR,
+    INICIAR_ATENCION,
+    RESOLVER,
+    CERRAR,
+    ACTUALIZAR,
+    ELIMINAR;
 
     @JsonCreator
     public static AccionHistorial fromValue(String value) {
         for (AccionHistorial accion : values()) {
-            if (accion.value.equalsIgnoreCase(value)) {
+            if (accion.name().equalsIgnoreCase(value)) {
                 return accion;
             }
         }

@@ -61,7 +61,9 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     public SolicitudResponse registrar(CrearSolicitudRequest request) {
         Usuario actor = authenticatedUserProvider.getCurrentUser();
-        Usuario solicitante = findUsuario(request.solicitanteId(), "No existe el solicitante indicado.");
+        Usuario solicitante = request.solicitanteId() == null
+                ? actor
+                : findUsuario(request.solicitanteId(), "No existe el solicitante indicado.");
         ensureCanRegisterFor(actor, solicitante);
         TipoSolicitud tipoSolicitud = findTipoSolicitud(request.tipo());
 
@@ -74,7 +76,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         solicitud.getPrioridad().setFechaLimite(request.fechaLimite());
 
         registrarEvento(solicitud, AccionHistorial.REGISTRAR, actor,
-                "Solicitud registrada desde el canal " + request.canalOrigen().value() + ".");
+                "Solicitud registrada desde el canal " + request.canalOrigen().name() + ".");
 
         return solicitudMapper.toResponse(solicitudRepository.save(solicitud));
     }
@@ -247,6 +249,32 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
 
     @Override
+    public void eliminar(UUID solicitudId) {
+        Solicitud solicitud = findSolicitud(solicitudId);
+        Usuario actor = authenticatedUserProvider.getCurrentUser();
+
+        boolean isOwner = actor.getPublicId().equals(solicitud.getSolicitante().getPublicId());
+        boolean isPrivileged = isPrivileged(actor);
+
+        if (!isOwner && !isPrivileged) {
+            throw new AccessDeniedException("No tiene permisos para eliminar esta solicitud.");
+        }
+
+        if (solicitud.estaCerrada()) {
+            throw new BusinessRuleException("No se puede eliminar una solicitud cerrada.");
+        }
+
+        if (!EstadoSolicitud.REGISTRADA.equals(solicitud.getEstado()) && !isPrivileged) {
+            throw new BusinessRuleException("Solo puede eliminar solicitudes en estado registrada.");
+        }
+
+        registrarEvento(solicitud, AccionHistorial.ELIMINAR, actor,
+                "Solicitud eliminada por " + actor.getNombre() + ".");
+
+        solicitudRepository.delete(solicitud);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<HistorialAccionResponse> obtenerHistorial(UUID solicitudId) {
         Solicitud solicitud = findSolicitud(solicitudId);
@@ -270,7 +298,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     private TipoSolicitud findTipoSolicitud(com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration.TipoSolicitudCodigo codigo) {
         return tipoSolicitudRepository.findByCodigo(codigo)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "No existe el catalogo para el tipo de solicitud " + codigo.value() + "."));
+                        "No existe el catalogo para el tipo de solicitud " + codigo.name() + "."));
     }
 
     private void registrarEvento(Solicitud solicitud, AccionHistorial accion, Usuario actor, String observacion) {

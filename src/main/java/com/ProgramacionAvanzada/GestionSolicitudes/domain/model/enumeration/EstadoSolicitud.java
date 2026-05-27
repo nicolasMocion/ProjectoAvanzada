@@ -1,7 +1,6 @@
 package com.ProgramacionAvanzada.GestionSolicitudes.domain.model.enumeration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -32,15 +31,10 @@ public enum EstadoSolicitud {
         };
     }
 
-    @JsonValue
-    public String value() {
-        return value;
-    }
-
     @JsonCreator
     public static EstadoSolicitud fromValue(String value) {
         for (EstadoSolicitud estado : values()) {
-            if (estado.value.equalsIgnoreCase(value)) {
+            if (estado.name().equalsIgnoreCase(value)) {
                 return estado;
             }
         }

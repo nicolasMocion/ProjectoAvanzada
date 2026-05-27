@@ -12,6 +12,6 @@ public record CrearSolicitudRequest(
         @NotNull TipoSolicitudCodigo tipo,
         @NotBlank @Size(max = 2000) String descripcion,
         @NotNull CanalOrigen canalOrigen,
-        @NotNull UUID solicitanteId,
+        UUID solicitanteId,
         LocalDateTime fechaLimite) {
 }

@@ -5,10 +5,9 @@ import com.ProgramacionAvanzada.GestionSolicitudes.dto.response.AuthTokenRespons
 import com.ProgramacionAvanzada.GestionSolicitudes.dto.response.UsuarioResumenResponse;
 import com.ProgramacionAvanzada.GestionSolicitudes.security.ApplicationUserDetails;
 import com.ProgramacionAvanzada.GestionSolicitudes.security.JwtService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,39 +17,32 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Recibe peticiones HTTP de autenticación.
- * Maneja el login de usuarios y genera JWT
- * @author desuu03
- * @version 1.0
- */
-
-
 @RestController
 @Validated
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/auth")
-@SecurityRequirements
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthTokenResponse> login(@Valid @RequestBody LoginRequest request) {
+    public AuthTokenResponse login(@Valid @RequestBody LoginRequest request) {
+        log.debug("Login attempt for: {}", request.email());
         Authentication authentication = authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
-
+        log.debug("Authentication successful, issuing token...");
         ApplicationUserDetails userDetails = (ApplicationUserDetails) authentication.getPrincipal();
         JwtService.IssuedToken issuedToken = jwtService.issueToken(userDetails);
-
-        return ResponseEntity.ok(new AuthTokenResponse(
+        log.debug("Token issued, building response...");
+        return new AuthTokenResponse(
                 issuedToken.value(),
                 "Bearer",
                 issuedToken.expiresAt(),
                 new UsuarioResumenResponse(
                         userDetails.getUsuario().getPublicId(),
                         userDetails.getUsuario().getNombre(),
-                        userDetails.getUsuario().getRol())));
+                        userDetails.getUsuario().getRol()));
     }
 }

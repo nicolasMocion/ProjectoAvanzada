@@ -34,6 +34,8 @@ public class SolicitudMapper {
                 toUsuarioResumen(solicitud.getResponsable()),
                 prioridad != null ? prioridad.getFechaLimite() : null,
                 solicitud.getObservacion(),
+                solicitud.getObservacionCierre(),
+                solicitud.getRespuesta(),
                 solicitud.getTipoSugerenciaIa(),
                 solicitud.getPrioridadSugerenciaIa(),
                 solicitud.getValorConfianzaIa());

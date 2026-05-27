@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -119,6 +120,12 @@ public class SolicitudController {
             @PathVariable UUID id,
             @Valid @RequestBody CerrarSolicitudRequest request) {
         return solicitudService.cerrar(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarSolicitud(@PathVariable UUID id) {
+        solicitudService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/historial")

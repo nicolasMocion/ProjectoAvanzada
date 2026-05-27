@@ -83,10 +83,16 @@ public class ReferenceDataInitializer {
             String rawPassword,
             RolUsuario rol) {
         usuarioRepository.findByEmailIgnoreCase(email).ifPresentOrElse(usuario -> {
-            if (usuario.getPasswordHash() == null || usuario.getPasswordHash().isBlank()) {
+            boolean needsSave = false;
+            if (!passwordEncoder.matches(rawPassword, usuario.getPasswordHash() == null ? "" : usuario.getPasswordHash())) {
                 usuario.setPasswordHash(passwordEncoder.encode(rawPassword));
-                usuarioRepository.save(usuario);
+                needsSave = true;
             }
+            if (!Boolean.TRUE.equals(usuario.getActivo())) {
+                usuario.setActivo(Boolean.TRUE);
+                needsSave = true;
+            }
+            if (needsSave) usuarioRepository.save(usuario);
         }, () -> {
             Usuario usuario = new Usuario();
             usuario.setIdentificacion(identificacion);

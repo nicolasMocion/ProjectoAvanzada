@@ -21,6 +21,8 @@ public record SolicitudResponse(
         UsuarioResumenResponse responsable,
         LocalDateTime fechaLimite,
         String observacion,
+        String observacionCierre,
+        String respuesta,
         TipoSolicitudCodigo tipoSugerenciaIa,
         PrioridadNivel prioridadSugerenciaIa,
         BigDecimal valorConfianzaIa) {
