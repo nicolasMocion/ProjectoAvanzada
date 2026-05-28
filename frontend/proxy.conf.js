@@ -1,4 +1,4 @@
-const TARGET = "http://localhost:8080";
+const TARGET = process.env.BACKEND_URL || "http://localhost:8080";
 const OPTS = { target: TARGET, secure: false, changeOrigin: true };
 
 const PROXY_CONFIG = {

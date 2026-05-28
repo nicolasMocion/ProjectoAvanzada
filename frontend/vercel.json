@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "angular",
+  "rewrites": [
+    { "source": "/auth/(.*)", "destination": "projectoavanzada-production.up.railway.app/auth/$1" },
+    { "source": "/solicitudes/(.*)", "destination": "projectoavanzada-production.up.railway.app/solicitudes/$1" },
+    { "source": "/sugerencias/(.*)", "destination": "projectoavanzada-production.up.railway.app/$1" },
+    { "source": "/usuarios/(.*)", "destination": "projectoavanzada-production.up.railway.app/$1" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
